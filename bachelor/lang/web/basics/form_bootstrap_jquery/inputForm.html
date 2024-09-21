@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<link href="bootstrap.min.css" rel="stylesheet">
+	<script src="jquery-3.6.0.min.js"></script>
+</head>
+<body>
+	<div class="container mt-5">
+		<form id="input-form">
+			<h3>Варіант 6. Створити форму для запиту пароля. Має вводитися наступна інформація</h3>
+			<div class="form-row">
+				<div class="form-group col-12 col-md-6">
+					<label for="inputEmail">Ім’я користувача</label>
+					<input type="email" class="form-control" id="inputName" placeholder="Name">
+				</div>
+				<div class="form-group col-12 col-md-6">
+					<span class="" id="inputName-help"></span>
+				</div>
+				<div class="form-group col-12 col-md-6">
+					<label for="inputPassword">Пароль</label>
+					<input type="password" class="form-control" id="inputPassword" placeholder="Password">
+				</div>
+				<div class="form-group col-12 col-md-6">
+					<span class="" id="inputPassword-help"></span>
+				</div>
+				<div class="form-group col-12 col-md-6">
+					<label for="inputList">Ресурс</label>
+					<select id="inputList" class="form-control">
+						<option value="1" selected>Повний доступ</option>
+						<option value="2">Проглядання бази даних</option>
+						<option value="3">Редагування бази даних</option>
+					</select>
+				</div>
+				<div class="form-group col-12 col-md-6">
+					<span class="" id="inputList-help"></span>
+				</div>
+				<div class="form-group col-12 col-md-6">
+					<label for="inputFile">Файл</label>
+					<input type="file" class="form-control-file" id="inputFile">
+				</div>
+				<div class="form-group col-12 col-md-6">
+					<span class="" id="inputFile-help"></span>
+				</div>
+			</div>
+			<div class="col text-center">
+				<div class="btn btn-primary" id="form-check">Перевірка</div>
+				<input class="btn btn-primary" type="reset" value="Очистити">
+				<div class="btn btn-primary" id="form-send-mail">Відправити на пошту</div>
+			</div>
+		</form>
+		<div class="row mt-5 text-center">
+			<div class="col-12" id="timedate">
+				<a id="mon">January</a>
+				<a id="d">1</a>,
+				<a id="y">0</a><br/>
+				<a id="h">12</a> :
+				<a id="m">00</a> :
+				<a id="s">00</a> :
+				<a id="mi">000</a>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		let flagArray = [false, false, false, false];
+		let idArray = ["#inputName", "#inputPassword", "#inputPassword", "#inputFile"];
+		function formCheck(){
+			flagArray[0] = $(idArray[0]).val() != "";
+			flagArray[1] = $(idArray[1]).val() != "";
+			flagArray[2] = $(idArray[2]).val().length >= 8;
+			flagArray[3] = $(idArray[3]).val();
+alert(
+`Имя заполнено: ${(flagArray[0])?"Да":"Нет"}
+Пароль заполнен: ${(flagArray[1])?"Да":"Нет"}
+В пароле 8 или больше символов: ${(flagArray[2])?"Да":"Нет"}
+Файл загружен: ${(flagArray[3])?"Да":"Нет"}`)
+			for (let i = 0; i < 4; ++i) {
+				if (flagArray[i]) {
+					$(idArray[i]).removeClass("alert-danger");
+					$(idArray[i]).addClass("alert-success");
+					if (i == 2) {
+						$(idArray[i]+"-help").text("");
+						$(idArray[i]+"-help").removeClass("alert-danger");
+					}
+				} else {
+					$(idArray[i]).removeClass("alert-success");
+					$(idArray[i]).addClass("alert-danger");
+					if (i == 2) {
+						$(idArray[i]+"-help").text("Пароль содержит меньше 8ми символов");
+						$(idArray[i]+"-help").addClass("alert-danger");
+					}
+				}
+			}
+		}
+		$("#form-check").click(formCheck);
+
+Number.prototype.pad = function(n) {
+	for (var r = this.toString(); r.length < n; r = 0 + r);
+	return r;
+};
+function updateClock() {
+	var now = new Date();
+	var milli = now.getMilliseconds(),
+	sec = now.getSeconds(),
+	min = now.getMinutes(),
+	hou = now.getHours(),
+	mo = now.getMonth(),
+	dy = now.getDate(),
+	yr = now.getFullYear();
+	var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+	var tags = ["mon", "d", "y", "h", "m", "s", "mi"],
+	corr = [months[mo], dy, yr, hou.pad(2), min.pad(2), sec.pad(2), milli];
+	for (var i = 0; i < tags.length; i++)
+		document.getElementById(tags[i]).firstChild.nodeValue = corr[i];
+}
+function initClock() {
+	updateClock();
+	window.setInterval("updateClock()", 1);
+}
+$(document).ready(initClock);
+
+$('#form-send-mail').click(() => {
+	$('#input-form').attr('action',
+`mailto:test@test.com?subject=Name:${$("#inputName").text()},Password:${$("#inputPassword").text()},List:${$("#inputList").val()}`);
+	$('#input-form').submit();
+});
+	</script>
+</body>
+</html>
