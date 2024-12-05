@@ -8,6 +8,7 @@ pd.set_option("display.float_format", '{:.2f}'.format)
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+from openpyxl import load_workbook
 
 #class Object:
 #    def __init__(self, **attributes):
@@ -42,17 +43,21 @@ class Model:
             filename = self.river_name+".xlsx"
             if not os.path.isfile(self.river_name+".xlsx"):
                 raise FileNotFoundError(self.river_name+".xls[x]")
-        data_columns = ['year', 'C', 'BOD', 'DO']
-        parameters_columns = ["v", "h"]
+        present_column_count = load_workbook(filename).worksheets[0].max_column
+        data_columns = ['year', 'C', 'BOD', 'DO', 'v', 'h'][0:present_column_count]
         data_df = pd.read_excel(filename, sheet_name="data")
         data_df.columns = data_columns
         data_df["year"] = pd.to_datetime(data_df['year'].astype(str), format=self.date_format)
         data_df["year"] = data_df["year"].map(lambda x: x.year + extract_year_fraction(x))
         data_df.sort_values(by=['year'])
-        parameters = pd.read_excel(filename, sheet_name="parameters")[:1]
-        v = parameters.iloc[0,0]
-        h = parameters.iloc[0,1]
-        # uptade attributes
+        if present_column_count == 6:
+            v = data_df["v"].mean()
+            h = data_df["h"].mean()
+        else:
+            parameters_columns = ["v", "h"]
+            parameters = pd.read_excel(filename, sheet_name="parameters")[:1]
+            v = parameters.iloc[0,0]
+            h = parameters.iloc[0,1]
         return (data_df, v, h)
     def calculate_kr(self):
         # calculating reaeration rate
