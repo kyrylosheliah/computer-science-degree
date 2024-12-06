@@ -51,26 +51,31 @@ class Model:
         data_df["year"] = data_df["year"].map(lambda x: x.year + extract_year_fraction(x))
         data_df.sort_values(by=['year'])
         if present_column_count == 6:
-            v = data_df["v"].mean()
-            h = data_df["h"].mean()
+            #v = data_df["v"].mean()
+            #h = data_df["h"].mean()
+            v = data_df["v"].iloc[0]
+            h = data_df["h"].iloc[0]
         else:
-            parameters_columns = ["v", "h"]
+            #parameters_columns = ["v", "h"]
             parameters = pd.read_excel(filename, sheet_name="parameters")[:1]
             v = parameters.iloc[0,0]
             h = parameters.iloc[0,1]
         return (data_df, v, h)
     def calculate_kr(self):
         # calculating reaeration rate
-        C = self.data_df.loc[self.model_start_index, "C"]
-        if self.h < 0.61:
-            print("Owens-Gibbs:", end=" ")
-            kr20 = 5.32 * np.power(self.v, 0.67) / np.power(self.h, 1.85)
-        elif self.h > 0.61 and self.h > 3.45 * np.power(self.v, 2.5):
-            print("O'Connor-Dobbins:", end=" ")
-            kr20 = 3.93 * np.sqrt(self.v) / np.power(self.h, 1.5)
-        else:
-            print("Churchill:", end=" ")
-            kr20 = 5.026 * self.v * np.power(self.h, 1.67)
+        C = self.data_df["C"].loc[self.model_start_index]
+        #C = self.data_df["C"].mean()
+        #if self.h < 0.61:
+        #    print("Owens-Gibbs:", end=" ")
+        #    kr20 = 5.32 * np.power(self.v, 0.67) / np.power(self.h, 1.85)
+        #elif self.h > 0.61 and self.h > 3.45 * np.power(self.v, 2.5):
+        #    print("O'Connor-Dobbins:", end=" ")
+        #    kr20 = 3.93 * np.sqrt(self.v) / np.power(self.h, 1.5)
+        #else:
+        #    print("Churchill:", end=" ")
+        #    kr20 = 5.026 * self.v * np.power(self.h, 1.67)
+        print("O'Connor-Dobbins:", end=" ")
+        kr20 = 3.93 * np.sqrt(self.v) / np.power(self.h, 1.5)
         kr = kr20 * np.power(1.024, C - 20) # врахування температури
         # update attributes
         self.kr = kr
@@ -91,13 +96,13 @@ class Model:
         # display results
         print("kd={:.3f}".format(popt[1]))
         plt.figure(dpi=self.dpi)
-        puntos = plt.plot(x_data, y_data, 'x', color='xkcd:maroon', label = "data")
-        curve_regresion = plt.plot(x_data, f_BOD(x_data, *popt), color='xkcd:teal', label = "curve_fit")
+        plt.plot(x_data, y_data, 'x', color='xkcd:maroon', label = "data") # puntos
+        plt.plot(x_data, f_BOD(x_data, *popt), color='xkcd:teal', label = "curve_fit") # curve_regresion
         plt.legend()
         plt.title(self.river_name + " kd exponential regression")
         plt.show()
     def model(self, dt, T):
-        model_timeline = np.arange(0,T,dt) / 365 # час обчислення у роках
+        model_timeline = np.divide(np.arange(0,T,dt), 365) # час обчислення у роках
         DO_sat_y = self.DO_sat * np.ones(len(model_timeline))
         model_BOD = f_BOD(model_timeline, self.BOD_0, self.kd)
         model_DO = f_DO(model_timeline, self.DO_sat, self.DO_0, self.BOD_0, self.kd, self.kr)
@@ -135,21 +140,18 @@ class Model:
         plt.grid()
         plt.show()
     def fit(self, model_start_date, model_end_date, DO_sat):
-        data_df, v, h = self.load_file()
-        self.data_df = data_df
-        self.v = v
-        self.h = h
+        self.data_df, self.v, self.h = self.load_file()
         # initializing model from the data
         model_start_year = model_start_date.year + extract_year_fraction(model_start_date)
         model_end_year = model_end_date.year + extract_year_fraction(model_end_date)
-        data_start_year = data_df.loc[0, 'year']
-        model_start_index = data_df.index[data_df['year'] >= model_start_year].tolist()
-        model_end_index = data_df.index[data_df['year'] <= model_end_year].tolist()
+        data_start_year = self.data_df.loc[0, 'year']
+        model_start_index = self.data_df.index[self.data_df['year'] >= model_start_year].tolist()
+        model_end_index = self.data_df.index[self.data_df['year'] <= model_end_year].tolist()
         if len(model_start_index) == 0 or len(model_end_index) == 0:
             raise ValueError("wrong model_start_year or model_end_year value")
         model_start_index = model_start_index[0]
         model_end_index = model_end_index[-1]
-        model_df = data_df.loc[model_start_index:model_end_index]
+        model_df = self.data_df.loc[model_start_index:model_end_index]
         model_row_count = len(model_df.index)
         # update attributes
         self.data_start_year = data_start_year
